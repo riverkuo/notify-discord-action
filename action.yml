@@ -9,6 +9,7 @@ runs:
   using: 'composite'
   steps:
     - name: Notify Discord
+      shell: bash
       env:
         REPO_NAME: ${{ github.event.repository.name }}
         USER_NAME: ${{ github.actor }}
@@ -34,3 +35,13 @@ runs:
               -d "{\"embeds\": [{\"title\": \"❌ Deploy Failed\", \"color\": 16711680, \"author\": {\"name\": \"by ${USER_NAME}\", \"url\": \"${USER_URL}\"}, \"description\": \"[Deploy ${BRANCH} on ${ENVIRONMENT} - Click to view run](${RUN_URL})\", \"fields\": [{\"name\": \"Repo\", \"value\": \"[${REPO_NAME}](${REPO_URL})\", \"inline\": true}, {\"name\": \"Commit\", \"value\": \"[${SHORT_SHA}](${COMMIT_URL})\", \"inline\": true}, {\"name\": \"Failed Job\", \"value\": \"${FAILED_JOB}\", \"inline\": true}], \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}]}" \
               "$DISCORD_WEBHOOK_URL"
           fi
+
+    - name: Set GitHub Path
+      run: echo "$GITHUB_ACTION_PATH" >> $GITHUB_PATH
+      shell: bash
+      env:
+        GITHUB_ACTION_PATH: ${{ github.action_path }}
+
+    - name: Run notify-discord.sh
+      run: notify-discord.sh
+      shell: bash

@@ -22,7 +22,6 @@ runs:
         USER_URL: ${{ github.server_url }}/${{ github.actor }}
         REPO_URL: ${{ github.server_url }}/${{ github.repository }}
         COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
-      if: always()
       run: |
           SHORT_SHA=${GITHUB_SHA:0:7}
           if [ "${{ job.status }}" = "success" ]; then

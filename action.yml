@@ -1,0 +1,36 @@
+name: Notify Discord
+
+inputs:
+  DISCORD_WEBHOOK_URL:
+    description: 'Discord webhook URL'
+    required: true
+
+runs:
+  using: 'composite'
+  steps:
+    - name: Notify Discord
+      env:
+        REPO_NAME: ${{ github.event.repository.name }}
+        USER_NAME: ${{ github.actor }}
+        BRANCH: ${{ github.ref_name }}
+        ENVIRONMENT: production
+        SHORT_SHA: ${{ github.sha }}
+        FAILED_JOB: ${{ github.job }}
+        DISCORD_WEBHOOK_URL: ${{ inputs.DISCORD_WEBHOOK_URL }}
+        RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        USER_URL: ${{ github.server_url }}/${{ github.actor }}
+        REPO_URL: ${{ github.server_url }}/${{ github.repository }}
+        COMMIT_URL: ${{ github.server_url }}/${{ github.repository }}/commit/${{ github.sha }}
+      run: |
+          SHORT_SHA=${GITHUB_SHA:0:7}
+          if [ "${{ job.status }}" = "success" ]; then
+            curl -H "Content-Type: application/json" \
+              -X POST \
+              -d "{\"embeds\": [{\"title\": \"✅ Deploy Succeeded\", \"color\": 65280, \"author\": {\"name\": \"by ${USER_NAME}\", \"url\": \"${USER_URL}\"}, \"description\": \"[Deploy ${BRANCH} on ${ENVIRONMENT} - Click to view run](${RUN_URL})\", \"fields\": [{\"name\": \"Repo\", \"value\": \"[${REPO_NAME}](${REPO_URL})\", \"inline\": true}, {\"name\": \"Commit\", \"value\": \"[${SHORT_SHA}](${COMMIT_URL})\", \"inline\": true}], \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}]}" \
+              "$DISCORD_WEBHOOK_URL"
+          else
+            curl -H "Content-Type: application/json" \
+              -X POST \
+              -d "{\"embeds\": [{\"title\": \"❌ Deploy Failed\", \"color\": 16711680, \"author\": {\"name\": \"by ${USER_NAME}\", \"url\": \"${USER_URL}\"}, \"description\": \"[Deploy ${BRANCH} on ${ENVIRONMENT} - Click to view run](${RUN_URL})\", \"fields\": [{\"name\": \"Repo\", \"value\": \"[${REPO_NAME}](${REPO_URL})\", \"inline\": true}, {\"name\": \"Commit\", \"value\": \"[${SHORT_SHA}](${COMMIT_URL})\", \"inline\": true}, {\"name\": \"Failed Job\", \"value\": \"${FAILED_JOB}\", \"inline\": true}], \"timestamp\": \"$(date -u +"%Y-%m-%dT%H:%M:%SZ")\"}]}" \
+              "$DISCORD_WEBHOOK_URL"
+          fi
